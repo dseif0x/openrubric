@@ -81,7 +81,7 @@ final class AnswerDelivery: ObservableObject {
 
     private func setupHIDManager() -> IOHIDManager? {
         if let m = hidManager { return m }
-        guard let manager = IOHIDManagerCreate(kCFAllocatorDefault, 0) else { return nil }
+        let manager = IOHIDManagerCreate(kCFAllocatorDefault, 0)
         let result = IOHIDManagerOpen(manager, 0)
         guard result == kIOReturnSuccess else { return nil }
         hidManager = manager
@@ -91,15 +91,15 @@ final class AnswerDelivery: ObservableObject {
     private func setCapsLockLED(_ on: Bool) {
         guard let manager = setupHIDManager() else { return }
 
-        // Match keyboard devices (usage page 1, usage 6 = keyboard)
+        // Match keyboard devices (Generic Desktop page, usage 6 = Keyboard)
         let matching: [String: Any] = [
-            kIOHIDDeviceUsagePageKey: kHIDPage_KeyboardOrKeypad,
-            kIOHIDDeviceUsageKey: kHIDUsage_KeyboardOrKeypad_Keyboard
+            kIOHIDDeviceUsagePageKey: kHIDPage_GenericDesktop,
+            kIOHIDDeviceUsageKey: kHIDUsage_GD_Keyboard
         ]
         IOHIDManagerSetDeviceMatching(manager, matching as CFDictionary)
 
-        guard let devices = IOHIDManagerGetDevices(manager) as? [IOHIDDevice] else { return }
-        for device in devices {
+        guard let deviceSet = IOHIDManagerCopyDevices(manager) else { return }
+        for device in deviceSet as! Set<IOHIDDevice> {
             guard let elements = IOHIDDeviceCopyMatchingElements(device, nil, 0) as? [IOHIDElement] else { continue }
             for element in elements {
                 // LED page (0x08), Caps Lock usage (0x02)
@@ -108,7 +108,7 @@ final class AnswerDelivery: ObservableObject {
                         kCFAllocatorDefault, element, 0, on ? 1 : 0
                     )
                     if let v = value {
-                        IOHIDDeviceSetValue(device, v)
+                        IOHIDDeviceSetValue(device, element, v)
                     }
                 }
             }
