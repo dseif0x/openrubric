@@ -1,4 +1,5 @@
 import SwiftUI
+import IOKit.hid
 
 struct OnboardingView: View {
     @State private var step = 0
@@ -100,11 +101,13 @@ struct OnboardingView: View {
 
                     OnboardPermissionRow(
                         symbol: "keyboard",
-                        title: "Accessibility",
-                        subtitle: "Required for the global keyboard shortcut."
+                        title: "Input Monitoring",
+                        subtitle: "Optional — only for Caps Lock LED answer delivery."
                     ) {
-                        let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-                        NSWorkspace.shared.open(url)
+                        IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+                            NSWorkspace.shared.open(url)
+                        }
                     }
 
                     Spacer()
@@ -186,8 +189,8 @@ struct OnboardPermissionRow: View {
     private func checkState() {
         if title == "Screen Recording" {
             granted = CGPreflightScreenCaptureAccess()
-        } else if title == "Accessibility" {
-            granted = AXIsProcessTrusted()
+        } else if title == "Input Monitoring" {
+            granted = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
         }
     }
 }

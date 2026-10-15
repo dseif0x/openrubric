@@ -39,6 +39,7 @@ final class AnswerDelivery: ObservableObject {
     // MARK: - Public
 
     func deliver(_ answers: [Int], mode: ExamMode) {
+        NSLog("[OpenRubric] Deliver answers \(answers) via \(mode.rawValue)")
         currentTask?.cancel()
         currentTask = Task { @MainActor in
             switch mode {
@@ -83,7 +84,12 @@ final class AnswerDelivery: ObservableObject {
         if let m = hidManager { return m }
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, 0)
         let result = IOHIDManagerOpen(manager, 0)
-        guard result == kIOReturnSuccess else { return nil }
+        guard result == kIOReturnSuccess else {
+            // kIOReturnNotPermitted (0xe00002e2) here means Input Monitoring hasn't been
+            // granted — the system logs "TCC deny IOHIDDeviceOpen" alongside this.
+            NSLog("[OpenRubric] IOHIDManagerOpen failed (0x\(String(result, radix: 16))) — grant Input Monitoring in Settings → Privacy & Security")
+            return nil
+        }
         hidManager = manager
         return manager
     }
@@ -114,6 +120,7 @@ final class AnswerDelivery: ObservableObject {
     }
 
     private func blinkCapsLock(_ answers: [Int]) async {
+        NSLog("[OpenRubric] Caps Lock blink starting for \(answers)")
         for answer in answers {
             for _ in 0..<max(answer, 1) {
                 guard !Task.isCancelled else { return }
@@ -134,7 +141,10 @@ final class AnswerDelivery: ObservableObject {
             kIOMainPortDefault,
             IOServiceMatching("AppleHSBacklight")
         )
-        guard service != 0 else { return }
+        guard service != 0 else {
+            NSLog("[OpenRubric] Keyboard backlight: AppleHSBacklight service not found (not available on Apple Silicon)")
+            return
+        }
         defer { IOObjectRelease(service) }
 
         // Read the max from IORegistry to scale properly
@@ -150,6 +160,7 @@ final class AnswerDelivery: ObservableObject {
     }
 
     private func pulseBacklight(_ answers: [Int]) async {
+        NSLog("[OpenRubric] Keyboard backlight pulse starting for \(answers)")
         for answer in answers {
             for _ in 0..<max(answer, 1) {
                 guard !Task.isCancelled else { return }
@@ -165,7 +176,34 @@ final class AnswerDelivery: ObservableObject {
 
     // MARK: - Screen brightness via IOKit display
 
+    // IODisplayConnect (the legacy path below) does not exist on Apple Silicon, so we prefer
+    // the private DisplayServices framework, which controls the built-in display's brightness
+    // on both Intel and Apple Silicon. It's loaded lazily via dlopen so a missing framework
+    // degrades gracefully rather than breaking launch.
+    private typealias DSBrightnessSetter = @convention(c) (CGDirectDisplayID, Float) -> Int32
+    private typealias DSBrightnessGetter = @convention(c) (CGDirectDisplayID, UnsafeMutablePointer<Float>) -> Int32
+
+    private static let displayServices: UnsafeMutableRawPointer? =
+        dlopen("/System/Library/PrivateFrameworks/DisplayServices.framework/DisplayServices", RTLD_LAZY)
+
+    private func displayServicesSetBrightness(_ level: Float) -> Bool {
+        guard let handle = Self.displayServices,
+              let sym = dlsym(handle, "DisplayServicesSetBrightness") else { return false }
+        let fn = unsafeBitCast(sym, to: DSBrightnessSetter.self)
+        return fn(CGMainDisplayID(), level) == 0
+    }
+
+    private func displayServicesGetBrightness() -> Float? {
+        guard let handle = Self.displayServices,
+              let sym = dlsym(handle, "DisplayServicesGetBrightness") else { return nil }
+        let fn = unsafeBitCast(sym, to: DSBrightnessGetter.self)
+        var level: Float = 0
+        return fn(CGMainDisplayID(), &level) == 0 ? level : nil
+    }
+
     private func getScreenBrightness() -> Double {
+        if let level = displayServicesGetBrightness() { return Double(level) }
+
         var iterator: io_iterator_t = 0
         IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IODisplayConnect"), &iterator)
         defer { IOObjectRelease(iterator) }
@@ -177,23 +215,39 @@ final class AnswerDelivery: ObservableObject {
                 return Double(level)
             }
         }
+        NSLog("[OpenRubric] Screen brightness: no readable brightness API, assuming 0.7")
         return 0.7
     }
 
     private func setScreenBrightness(_ level: Double) {
+        let clamped = Float(min(max(level, 0), 1))
+        if displayServicesSetBrightness(clamped) { return }
+
         var iterator: io_iterator_t = 0
         IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IODisplayConnect"), &iterator)
         defer { IOObjectRelease(iterator) }
         var service = IOIteratorNext(iterator)
+        var applied = false
         while service != 0 {
             defer { IOObjectRelease(service); service = IOIteratorNext(iterator) }
-            IODisplaySetFloatParameter(service, 0, kIODisplayBrightnessKey as CFString, Float(level))
+            IODisplaySetFloatParameter(service, 0, kIODisplayBrightnessKey as CFString, clamped)
+            applied = true
+        }
+        if !applied {
+            NSLog("[OpenRubric] Screen brightness: no writable display service found")
         }
     }
 
     private func flashScreen(_ answers: [Int]) async {
+        NSLog("[OpenRubric] Screen flash starting for \(answers)")
         let saved = getScreenBrightness()
         savedScreenBrightness = saved
+        // Always restore brightness, even if the task is cancelled mid-flash (e.g. a new
+        // trigger), so the screen is never left dimmed.
+        defer {
+            setScreenBrightness(saved)
+            savedScreenBrightness = nil
+        }
         for answer in answers {
             for _ in 0..<max(answer, 1) {
                 guard !Task.isCancelled else { return }
@@ -204,7 +258,6 @@ final class AnswerDelivery: ObservableObject {
             }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
-        setScreenBrightness(saved)
     }
 
     private func restoreScreenBrightness() {
