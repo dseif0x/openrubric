@@ -15,51 +15,50 @@ final class OCRService: @unchecked Sendable {
     ///   - cgImage: the full-display screenshot
     ///   - pointerInImage: pointer position in image pixel coordinates (top-left origin)
     func findAnchorText(cgImage: CGImage, pointerInImage: CGPoint) async -> OCRAnchor? {
-        // Vision types (VNImageRequestHandler, VNRecognizeTextRequest) are not Sendable.
-        // Run the entire OCR operation inside a single detached task so nothing crosses
-        // concurrency domains until we produce a Sendable result.
         let pointer = pointerInImage
         let imageWidth = cgImage.width
         let imageHeight = cgImage.height
 
         return await withCheckedContinuation { continuation in
-            let request = VNRecognizeTextRequest { request, error in
-                guard error == nil,
-                      let observations = request.results as? [VNRecognizedTextObservation] else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-
-                // Find the observation whose bounding box center is nearest the pointer
-                var best: (obs: VNRecognizedTextObservation, dist: CGFloat)?
-                for obs in observations {
-                    let box = obs.boundingBox // normalized, bottom-left origin
-                    let center = CGPoint(x: box.midX, y: box.midY)
-                    let dx = center.x - pointer.x / CGFloat(imageWidth)
-                    let dy = center.y - (1.0 - pointer.y / CGFloat(imageHeight))
-                    let dist = dx * dx + dy * dy
-                    if best == nil || dist < best!.dist {
-                        best = (obs, dist)
-                    }
-                }
-
-                guard let winner = best,
-                      let topCandidate = winner.obs.topCandidates(1).first else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                continuation.resume(returning: OCRAnchor(
-                    text: topCandidate.string,
-                    boundingBox: winner.obs.boundingBox
-                ))
-            }
-
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = true
-            request.recognitionLanguages = ["ko-KR", "en-US"]
-
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
             DispatchQueue.global(qos: .userInitiated).async {
+                // Create Vision objects inside this closure so they never cross
+                // a concurrency domain — no Sendable conformance needed.
+                let request = VNRecognizeTextRequest { request, error in
+                    guard error == nil,
+                          let observations = request.results as? [VNRecognizedTextObservation] else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+
+                    // Find the observation whose bounding box center is nearest the pointer
+                    var best: (obs: VNRecognizedTextObservation, dist: CGFloat)?
+                    for obs in observations {
+                        let box = obs.boundingBox // normalized, bottom-left origin
+                        let center = CGPoint(x: box.midX, y: box.midY)
+                        let dx = center.x - pointer.x / CGFloat(imageWidth)
+                        let dy = center.y - (1.0 - pointer.y / CGFloat(imageHeight))
+                        let dist = dx * dx + dy * dy
+                        if best == nil || dist < best!.dist {
+                            best = (obs, dist)
+                        }
+                    }
+
+                    guard let winner = best,
+                          let topCandidate = winner.obs.topCandidates(1).first else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    continuation.resume(returning: OCRAnchor(
+                        text: topCandidate.string,
+                        boundingBox: winner.obs.boundingBox
+                    ))
+                }
+
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                request.recognitionLanguages = ["ko-KR", "en-US"]
+
+                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
                 do {
                     try handler.perform([request])
                 } catch {

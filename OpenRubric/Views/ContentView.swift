@@ -323,7 +323,7 @@ struct PermissionRow: View {
             Spacer(minLength: 12)
             if granted {
                 Label("Allowed", systemImage: "checkmark")
-                    .font(.system(size: 11, .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.green)
             } else {
                 Button("Open Settings") {
