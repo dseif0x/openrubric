@@ -103,13 +103,11 @@ final class AnswerDelivery: ObservableObject {
             guard let elements = IOHIDDeviceCopyMatchingElements(device, nil, 0) as? [IOHIDElement] else { continue }
             for element in elements {
                 // LED page (0x08), Caps Lock usage (0x02)
-                if element.usagePage == kHIDPage_LEDs && element.usage == kHIDUsage_LED_CapsLock {
+                if IOHIDElementGetUsagePage(element) == kHIDPage_LEDs && IOHIDElementGetUsage(element) == kHIDUsage_LED_CapsLock {
                     let value = IOHIDValueCreateWithIntegerValue(
                         kCFAllocatorDefault, element, 0, on ? 1 : 0
                     )
-                    if let v = value {
-                        IOHIDDeviceSetValue(device, element, v)
-                    }
+                    IOHIDDeviceSetValue(device, element, value)
                 }
             }
         }
