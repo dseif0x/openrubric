@@ -119,7 +119,7 @@ struct ProviderConfigView: View {
                     InfoRow("1", "Point at a question on screen with your mouse")
                     InfoRow("2", "Press your global shortcut (default ⌥⏎)")
                     InfoRow("3", "The display is captured, OCR locates the nearest text to your pointer")
-                    InfoRow("4", "The screenshot + pink marker + OCR anchor is sent to YOUR provider")
+                    InfoRow("4", "The screenshot with a pink marker at the pointer is sent to YOUR provider")
                     InfoMark("The model reads the question from the image and returns the answer")
                 }
                 .padding(16)

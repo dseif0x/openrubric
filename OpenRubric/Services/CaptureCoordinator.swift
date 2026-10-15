@@ -13,7 +13,11 @@ final class CaptureCoordinator: ObservableObject {
     private var solveTask: Task<Void, Never>?
 
     func triggerCaptureAndSolve() {
-        guard !isProcessing else { return }
+        guard !isProcessing else {
+            NSLog("[OpenRubric] Hotkey ignored — a capture is already in progress")
+            return
+        }
+        NSLog("[OpenRubric] Capture triggered")
 
         let settings = SettingsStore.shared
         guard settings.isConfigured else {
@@ -32,6 +36,7 @@ final class CaptureCoordinator: ObservableObject {
         solveTask = Task { @MainActor in
             defer {
                 isProcessing = false
+                NSLog("[OpenRubric] Capture pipeline finished, ready for next hotkey")
             }
 
             let mode = settings.currentMode
@@ -47,44 +52,46 @@ final class CaptureCoordinator: ObservableObject {
                 return
             }
 
-            AnswerDelivery.shared.setWorking("Reading…")
+            AnswerDelivery.shared.setWorking("Solving…")
+            NSLog("[OpenRubric] Capture OK (\(capture.image.width)x\(capture.image.height)), calling AI")
 
-            // Pointer position relative to display origin, scaled to image pixels
+            // Pointer position relative to display origin, then scaled into image pixels.
+            // Derive the scale from the ACTUAL captured image size rather than assuming the
+            // backing scale factor — ScreenCaptureKit may return a different resolution, and
+            // guessing wrong puts the marker on the wrong question. pointerLocation and
+            // displayBounds share the same (Quartz global) units, so this ratio is correct
+            // regardless of points-vs-pixels.
+            let scaleX = CGFloat(capture.image.width) / capture.displayBounds.width
+            let scaleY = CGFloat(capture.image.height) / capture.displayBounds.height
             let pointerInDisplay = CGPoint(
                 x: capture.pointerLocation.x - capture.displayBounds.minX,
                 y: capture.pointerLocation.y - capture.displayBounds.minY
             )
             let pointerInImage = CGPoint(
-                x: pointerInDisplay.x * capture.scale,
-                y: pointerInDisplay.y * capture.scale
+                x: pointerInDisplay.x * scaleX,
+                y: pointerInDisplay.y * scaleY
             )
+            NSLog("[OpenRubric] pointer global=\(capture.pointerLocation) display=\(capture.displayBounds) image=\(capture.image.width)x\(capture.image.height) -> inImage=\(pointerInImage)")
 
-            // 2. OCR anchor
-            let anchor = await OCRService.shared.findAnchorText(
-                cgImage: capture.image,
-                pointerInImage: pointerInImage
-            )
-
-            AnswerDelivery.shared.setWorking("Solving…")
-
-            // 3. Draw the pink marker on the image (adds visual anchor for the model)
+            // Draw the pink marker on the image. This is the model's anchor for which
+            // question the user pointed at — no local OCR needed.
             let markedBase64 = Self.drawMarker(
                 on: capture.image,
                 pointerInImage: pointerInImage
             ) ?? capture.pngBase64
 
-            // 4. Build pointer description string
+            // Build pointer description string
             let pointerDesc = String(
                 format: "(%.0f, %.0f) pixels",
                 pointerInImage.x, pointerInImage.y
             )
 
-            // 5. Call the AI
+            // Call the AI
             switch mode {
             case .remote:
-                await solveFreeform(imageBase64: markedBase64, pointerDescription: pointerDesc, anchor: anchor?.text)
+                await solveFreeform(imageBase64: markedBase64, pointerDescription: pointerDesc)
             case .cbt, .capsLock, .keyboardBacklight, .flash:
-                await solveMultipleChoice(imageBase64: markedBase64, pointerDescription: pointerDesc, anchor: anchor?.text)
+                await solveMultipleChoice(imageBase64: markedBase64, pointerDescription: pointerDesc)
             }
         }
     }
@@ -92,12 +99,11 @@ final class CaptureCoordinator: ObservableObject {
     // MARK: - Solve paths
 
     @MainActor
-    private func solveMultipleChoice(imageBase64: String, pointerDescription: String, anchor: String?) async {
+    private func solveMultipleChoice(imageBase64: String, pointerDescription: String) async {
         do {
             let response = try await AIService.shared.solveMultipleChoice(
                 imageBase64: imageBase64,
-                pointerDescription: pointerDescription,
-                ocrAnchor: anchor
+                pointerDescription: pointerDescription
             )
 
             guard let first = response.answers.first, !first.answer.isEmpty else {
@@ -111,7 +117,7 @@ final class CaptureCoordinator: ObservableObject {
     }
 
     @MainActor
-    private func solveFreeform(imageBase64: String, pointerDescription: String, anchor: String?) async {
+    private func solveFreeform(imageBase64: String, pointerDescription: String) async {
         OverlayController.shared.answerText = ""
         OverlayController.shared.isStreaming = true
         OverlayController.shared.errorMessage = nil
@@ -119,8 +125,7 @@ final class CaptureCoordinator: ObservableObject {
 
         let stream = AIService.shared.solveFreeformStream(
             imageBase64: imageBase64,
-            pointerDescription: pointerDescription,
-            ocrAnchor: anchor
+            pointerDescription: pointerDescription
         )
 
         do {

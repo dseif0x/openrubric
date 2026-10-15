@@ -46,7 +46,11 @@ final class ScreenCaptureService {
         let bounds = CGDisplayBounds(displayID)
         let scale = await displayScale(displayID)
 
-        let cgImage = try await captureWithSCK(displayID: displayID)
+        let cgImage = try await captureWithSCK(
+            displayID: displayID,
+            pixelWidth: Int((bounds.width * scale).rounded()),
+            pixelHeight: Int((bounds.height * scale).rounded())
+        )
 
         guard let pngData = cgImage.pngData() else {
             throw CaptureError.encodingFailed
@@ -65,7 +69,7 @@ final class ScreenCaptureService {
     }
 
     /// Single-screenshot capture via SCScreenshotManager (macOS 14+).
-    private func captureWithSCK(displayID: CGDirectDisplayID) async throws -> CGImage {
+    private func captureWithSCK(displayID: CGDirectDisplayID, pixelWidth: Int, pixelHeight: Int) async throws -> CGImage {
         let shareableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         guard let display = shareableContent.displays.first(where: { $0.displayID == displayID }) else {
             throw CaptureError.noDisplayFound
@@ -76,6 +80,13 @@ final class ScreenCaptureService {
         config.showsCursor = false
         config.scalesToFit = false
         config.captureResolution = .best
+        // Capture at the display's full pixel resolution. Without this, SCStreamConfiguration
+        // uses a default size that may not match displayBounds × scale, which throws off the
+        // pointer-to-image mapping used to place the marker.
+        if pixelWidth > 0 && pixelHeight > 0 {
+            config.width = pixelWidth
+            config.height = pixelHeight
+        }
 
         return try await SCScreenshotManager.captureImage(
             contentFilter: filter,
