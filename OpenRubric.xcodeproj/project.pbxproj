@@ -1,0 +1,168 @@
+// !$*UTFABLE*!
+{
+	archiveVersion = 1;
+	objectVersion = 56;
+	classes = {};
+	objects = {
+
+/* PBXBuildFile */
+		B21022 /* OpenRubric/App.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21011 /* OpenRubric/App.swift */; };
+		B21044 /* OpenRubric/Models/ExamMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21033 /* OpenRubric/Models/ExamMode.swift */; };
+		B21066 /* OpenRubric/Models/AnswerModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21055 /* OpenRubric/Models/AnswerModels.swift */; };
+		B21088 /* OpenRubric/Services/SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21077 /* OpenRubric/Services/SettingsStore.swift */; };
+		B210AA /* OpenRubric/Services/HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21099 /* OpenRubric/Services/HotkeyManager.swift */; };
+		B210CC /* OpenRubric/Services/ScreenCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F210BB /* OpenRubric/Services/ScreenCaptureService.swift */; };
+		B210EE /* OpenRubric/Services/OCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F210DD /* OpenRubric/Services/OCRService.swift */; };
+		B21110 /* OpenRubric/Services/AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F210FF /* OpenRubric/Services/AIService.swift */; };
+		B21132 /* OpenRubric/Services/AnswerDelivery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21121 /* OpenRubric/Services/AnswerDelivery.swift */; };
+		B21154 /* OpenRubric/Services/OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21143 /* OpenRubric/Services/OverlayController.swift */; };
+		B21176 /* OpenRubric/Services/CaptureCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21165 /* OpenRubric/Services/CaptureCoordinator.swift */; };
+		B21198 /* OpenRubric/Views/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21187 /* OpenRubric/Views/ContentView.swift */; };
+		B211BA /* OpenRubric/Views/ModePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F211A9 /* OpenRubric/Views/ModePickerView.swift */; };
+		B211DC /* OpenRubric/Views/ProviderConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F211CB /* OpenRubric/Views/ProviderConfigView.swift */; };
+		B211FE /* OpenRubric/Views/OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F211ED /* OpenRubric/Views/OnboardingView.swift */; };
+		B21220 /* OpenRubric/Views/AnswerOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2120F /* OpenRubric/Views/AnswerOverlayWindow.swift */; };
+		B21242 /* OpenRubric/Views/MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21231 /* OpenRubric/Views/MenuBarView.swift */; };
+
+/* PBXFileReference */
+		F21011 /* OpenRubric/App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App.swift"; sourceTree = "<group>"; };
+		F21033 /* OpenRubric/Models/ExamMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExamMode.swift"; sourceTree = "<group>"; };
+		F21055 /* OpenRubric/Models/AnswerModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnswerModels.swift"; sourceTree = "<group>"; };
+		F21077 /* OpenRubric/Services/SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsStore.swift"; sourceTree = "<group>"; };
+		F21099 /* OpenRubric/Services/HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HotkeyManager.swift"; sourceTree = "<group>"; };
+		F210BB /* OpenRubric/Services/ScreenCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScreenCaptureService.swift"; sourceTree = "<group>"; };
+		F210DD /* OpenRubric/Services/OCRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OCRService.swift"; sourceTree = "<group>"; };
+		F210FF /* OpenRubric/Services/AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AIService.swift"; sourceTree = "<group>"; };
+		F21121 /* OpenRubric/Services/AnswerDelivery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnswerDelivery.swift"; sourceTree = "<group>"; };
+		F21143 /* OpenRubric/Services/OverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OverlayController.swift"; sourceTree = "<group>"; };
+		F21165 /* OpenRubric/Services/CaptureCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CaptureCoordinator.swift"; sourceTree = "<group>"; };
+		F21187 /* OpenRubric/Views/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
+		F211A9 /* OpenRubric/Views/ModePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModePickerView.swift"; sourceTree = "<group>"; };
+		F211CB /* OpenRubric/Views/ProviderConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProviderConfigView.swift"; sourceTree = "<group>"; };
+		F211ED /* OpenRubric/Views/OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OnboardingView.swift"; sourceTree = "<group>"; };
+		F2120F /* OpenRubric/Views/AnswerOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnswerOverlayWindow.swift"; sourceTree = "<group>"; };
+		F21231 /* OpenRubric/Views/MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MenuBarView.swift"; sourceTree = "<group>"; };
+		F21374 /* OpenRubric.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenRubric.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F21396 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F213A7 /* OpenRubric.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenRubric.entitlements; sourceTree = "<group>"; };
+
+/* PBXFrameworksBuildPhase */
+		P212DB = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+/* PBXGroup */
+		G21253 = { isa = PBXGroup; children = (G21264, G212B9); sourceTree = "<group>"; };
+		G21264 = { isa = PBXGroup; children = (G21297, G21286, G21275, G212A8, F213B8 /* Info.plist */, F213C9 /* OpenRubric.entitlements */); path = OpenRubric; sourceTree = "<group>"; };
+		G21297 /* Models */ = { isa = PBXGroup; children = (F21033 /* OpenRubric/Models/ExamMode.swift */, F21055 /* OpenRubric/Models/AnswerModels.swift */); path = Models; sourceTree = "<group>"; };
+		G21286 /* Services */ = { isa = PBXGroup; children = (F21077 /* OpenRubric/Services/SettingsStore.swift */, F21099 /* OpenRubric/Services/HotkeyManager.swift */, F210BB /* OpenRubric/Services/ScreenCaptureService.swift */, F210DD /* OpenRubric/Services/OCRService.swift */, F210FF /* OpenRubric/Services/AIService.swift */, F21121 /* OpenRubric/Services/AnswerDelivery.swift */, F21143 /* OpenRubric/Services/OverlayController.swift */, F21165 /* OpenRubric/Services/CaptureCoordinator.swift */); path = Services; sourceTree = "<group>"; };
+		G21275 /* Views */ = { isa = PBXGroup; children = (F21187 /* OpenRubric/Views/ContentView.swift */, F211A9 /* OpenRubric/Views/ModePickerView.swift */, F211CB /* OpenRubric/Views/ProviderConfigView.swift */, F211ED /* OpenRubric/Views/OnboardingView.swift */, F2120F /* OpenRubric/Views/AnswerOverlayWindow.swift */, F21231 /* OpenRubric/Views/MenuBarView.swift */); path = Views; sourceTree = "<group>"; };
+		G212A8 /* Resources */ = { isa = PBXGroup; children = (); path = Resources; sourceTree = "<group>"; };
+		G212B9 = { isa = PBXGroup; children = (F21374); name = Products; sourceTree = "<group>"; };
+
+/* PBXNativeTarget */
+		T212FD = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L21330;
+			buildPhases = (P212CA, P212DB, P212EC);
+			buildRules = ();
+			dependencies = ();
+			name = OpenRubric;
+			productName = OpenRubric;
+			productReference = F21374;
+			productType = "com.apple.product-type.application";
+		};
+
+/* PBXProject */
+		P21385 = {
+			isa = PBXProject;
+			attributes = { BuildIndependentTargetsInParallel = 1; };
+			buildConfigurationList = L21363;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			knownRegions = (en, Base);
+			mainGroup = G21253;
+			productRefGroup = G212B9;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (T212FD);
+		};
+
+/* PBXSourcesBuildPhase */
+		P212CA = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B21022 /* OpenRubric/App.swift in Sources */,
+				B21044 /* OpenRubric/Models/ExamMode.swift in Sources */,
+				B21066 /* OpenRubric/Models/AnswerModels.swift in Sources */,
+				B21088 /* OpenRubric/Services/SettingsStore.swift in Sources */,
+				B210AA /* OpenRubric/Services/HotkeyManager.swift in Sources */,
+				B210CC /* OpenRubric/Services/ScreenCaptureService.swift in Sources */,
+				B210EE /* OpenRubric/Services/OCRService.swift in Sources */,
+				B21110 /* OpenRubric/Services/AIService.swift in Sources */,
+				B21132 /* OpenRubric/Services/AnswerDelivery.swift in Sources */,
+				B21154 /* OpenRubric/Services/OverlayController.swift in Sources */,
+				B21176 /* OpenRubric/Services/CaptureCoordinator.swift in Sources */,
+				B21198 /* OpenRubric/Views/ContentView.swift in Sources */,
+				B211BA /* OpenRubric/Views/ModePickerView.swift in Sources */,
+				B211DC /* OpenRubric/Views/ProviderConfigView.swift in Sources */,
+				B211FE /* OpenRubric/Views/OnboardingView.swift in Sources */,
+				B21220 /* OpenRubric/Views/AnswerOverlayWindow.swift in Sources */,
+				B21242 /* OpenRubric/Views/MenuBarView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+/* PBXResourcesBuildPhase */
+		P212EC = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+
+/* XCBuildConfiguration */
+		C2130E = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = OpenRubric/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = OpenRubric/OpenRubric.entitlements;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.openrubric.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C2131F = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = OpenRubric/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = OpenRubric/OpenRubric.entitlements;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.openrubric.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C21341 = { isa = XCBuildConfiguration; buildSettings = { SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		C21352 = { isa = XCBuildConfiguration; buildSettings = { SWIFT_OPTIMIZATION_LEVEL = "-O"; }; name = Release; };
+
+/* XCConfigurationList */
+		L21330 = { isa = XCConfigurationList; buildConfigurations = (C2130E, C2131F); defaultConfigurationName = Release; };
+		L21363 = { isa = XCConfigurationList; buildConfigurations = (C21341, C21352); defaultConfigurationName = Release; };
+	};
+	rootObject = P21385;
+}
