@@ -1,4 +1,5 @@
 import SwiftUI
+import IOKit.hid
 
 struct ContentView: View {
     @StateObject private var settings = SettingsStore.shared
@@ -245,7 +246,11 @@ struct ShortcutRecorder: NSViewRepresentable {
 
 struct PermissionsView: View {
     @State private var screenGranted = false
-    @State private var accessibilityGranted = false
+    @State private var inputMonitoringGranted = false
+
+    // Permissions can be toggled in System Settings while this view is open, so poll so the
+    // state reflects reality without having to reopen the window.
+    private let refreshTimer = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
 
     var body: some View {
         SettingsScroll("Permissions") {
@@ -260,11 +265,11 @@ struct PermissionsView: View {
                     )
                     Divider().overlay(Color.white.opacity(0.06))
                     PermissionRow(
-                        symbol: "accessibility",
-                        title: "Accessibility",
-                        subtitle: "Required for global keyboard shortcuts.",
-                        granted: $accessibilityGranted,
-                        openPanel: "Accessibility"
+                        symbol: "keyboard",
+                        title: "Input Monitoring",
+                        subtitle: "Optional — only for Caps Lock LED answer delivery.",
+                        granted: $inputMonitoringGranted,
+                        openPanel: "InputMonitoring"
                     )
                 }
             }
@@ -292,11 +297,14 @@ struct PermissionsView: View {
         .onAppear {
             checkPermissions()
         }
+        .onReceive(refreshTimer) { _ in
+            checkPermissions()
+        }
     }
 
     private func checkPermissions() {
         screenGranted = CGPreflightScreenCaptureAccess()
-        accessibilityGranted = AXIsProcessTrusted()
+        inputMonitoringGranted = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
     }
 }
 
@@ -327,17 +335,20 @@ struct PermissionRow: View {
                     .foregroundStyle(.green)
             } else {
                 Button("Open Settings") {
-                    if openPanel == "ScreenCapture" {
+                    switch openPanel {
+                    case "InputMonitoring":
+                        // Prompt (first time) and deep-link to the pane for subsequent toggles.
+                        IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    default: // ScreenCapture
                         CGRequestScreenCaptureAccess()
-                    } else {
-                        let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-                        NSWorkspace.shared.open(url)
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        if openPanel == "ScreenCapture" {
-                            granted = CGPreflightScreenCaptureAccess()
-                        } else {
-                            granted = AXIsProcessTrusted()
+                        switch openPanel {
+                        case "InputMonitoring": granted = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+                        default: granted = CGPreflightScreenCaptureAccess()
                         }
                     }
                 }
@@ -387,6 +398,7 @@ struct SettingsCard<Content: View>: View {
 
     var body: some View {
         content
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.white.opacity(0.04))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
