@@ -1,5 +1,28 @@
 import SwiftUI
 
+/// The menu bar status item itself. In In-person (CBT) mode the icon reflects the live
+/// result — a progress indicator while solving and the answer number(s) once delivered —
+/// instead of only showing them as text inside the opened menu. Other modes keep the
+/// static mode icon (their answers are delivered through hardware/overlay channels).
+struct MenuBarLabel: View {
+    @StateObject private var settings = SettingsStore.shared
+    @StateObject private var iconState = AnswerDelivery.MenuBarIconState.shared
+
+    var body: some View {
+        if settings.currentMode == .cbt {
+            if iconState.isWorking {
+                Image(systemName: "hourglass")
+            } else if let answers = iconState.currentAnswer, !answers.isEmpty {
+                Text(answers.map(String.init).joined(separator: ","))
+            } else {
+                Image(systemName: settings.currentMode.systemImage)
+            }
+        } else {
+            Image(systemName: settings.currentMode.systemImage)
+        }
+    }
+}
+
 struct MenuBarView: View {
     @StateObject private var settings = SettingsStore.shared
     @StateObject private var iconState = AnswerDelivery.MenuBarIconState.shared
@@ -20,12 +43,12 @@ struct MenuBarView: View {
 
         Divider()
 
-        Text("Mode: \(settings.currentMode.displayName())")
-        ForEach(ExamMode.allCases) { mode in
-            Button(mode.displayName()) {
-                settings.currentMode = mode
+        Picker("Mode", selection: $settings.currentMode) {
+            ForEach(ExamMode.allCases) { mode in
+                Text(mode.displayName()).tag(mode)
             }
         }
+        .pickerStyle(.inline)
 
         Divider()
 
@@ -40,8 +63,8 @@ struct MenuBarView: View {
 
         Divider()
 
-        SettingsLink {
-            Text("Settings…")
+        Button("Settings…") {
+            OpenRubricWindows.shared.showSettings()
         }
         .keyboardShortcut(",", modifiers: .command)
 
@@ -49,18 +72,5 @@ struct MenuBarView: View {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q", modifiers: .command)
-    }
-}
-
-extension OpenRubricWindows {
-    /// Opens the Settings scene from AppKit contexts (applicationShouldHandleReopen).
-    /// MenuBarView uses SettingsLink directly — this is only for the delegate path.
-    func showSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
     }
 }

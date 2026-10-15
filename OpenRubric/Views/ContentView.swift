@@ -370,9 +370,10 @@ struct SettingsScroll<Content: View>: View {
                 content
             }
             .frame(maxWidth: 640, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 36)
             .padding(.top, 40)
             .padding(.bottom, 40)
-            .frame(maxWidth: .infinity)
         }
     }
 }

@@ -10,13 +10,9 @@ struct OpenRubricApp: App {
         MenuBarExtra {
             MenuBarView()
         } label: {
-            Image(systemName: settings.currentMode.systemImage)
+            MenuBarLabel()
         }
         .menuBarExtraStyle(.menu)
-
-        Settings {
-            ContentView()
-        }
     }
 }
 
@@ -37,20 +33,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+        OpenRubricWindows.shared.showSettings()
         return true
     }
 }
 
-/// Manages on-demand windows (onboarding).
+/// Manages on-demand windows (settings, onboarding).
 final class OpenRubricWindows {
     static let shared = OpenRubricWindows()
     private var onboardingWindow: NSWindow?
+    private var settingsWindow: NSWindow?
+
+    /// Opens (or re-focuses) the settings window. Uses a hand-rolled NSWindow instead of
+    /// the SwiftUI `Settings` scene so we can (a) bring it to the front in a menu-bar
+    /// (.accessory) app and (b) give it a transparent, full-size-content title bar that
+    /// matches ContentView's dark full-bleed layout.
+    func showSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 820, height: 580),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "OpenRubric Settings"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.backgroundColor = NSColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(rootView: ContentView())
+        window.makeKeyAndOrderFront(nil)
+        settingsWindow = window
+    }
 
     func showOnboarding() {
         guard onboardingWindow == nil else {
