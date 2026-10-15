@@ -37,11 +37,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        OpenRubricWindows.shared.showSettings()
+        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
         return true
     }
+}
 
-/// Manages on-demand windows (onboarding, answer overlay).
+/// Manages on-demand windows (onboarding).
 final class OpenRubricWindows {
     static let shared = OpenRubricWindows()
     private var onboardingWindow: NSWindow?

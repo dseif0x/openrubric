@@ -53,17 +53,14 @@ struct MenuBarView: View {
 }
 
 extension OpenRubricWindows {
-    /// Opens the Settings scene. Used from AppKit delegate contexts where
-    /// SettingsLink (SwiftUI) isn't available.
+    /// Opens the Settings scene from AppKit contexts (applicationShouldHandleReopen).
+    /// MenuBarView uses SettingsLink directly — this is only for the delegate path.
     func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
         if #available(macOS 14.0, *) {
-            // The supported programmatic path on macOS 14+
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         } else {
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
-    }
-}
     }
 }
