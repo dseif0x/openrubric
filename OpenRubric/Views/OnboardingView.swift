@@ -91,7 +91,7 @@ struct OnboardingView: View {
                         .padding(.top, 32)
 
                     OnboardPermissionRow(
-                        symbol: "rectangle.inset.filled.and.person.filled",
+                        symbol: "camera.viewfinder",
                         title: "Screen Recording",
                         subtitle: "Required to read the question under your cursor."
                     ) {
@@ -99,7 +99,7 @@ struct OnboardingView: View {
                     }
 
                     OnboardPermissionRow(
-                        symbol: "accessibility",
+                        symbol: "keyboard",
                         title: "Accessibility",
                         subtitle: "Required for the global keyboard shortcut."
                     ) {

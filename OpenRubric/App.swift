@@ -40,7 +40,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         OpenRubricWindows.shared.showSettings()
         return true
     }
-}
 
 /// Manages on-demand windows (onboarding, answer overlay).
 final class OpenRubricWindows {

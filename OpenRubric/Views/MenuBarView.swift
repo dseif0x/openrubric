@@ -40,8 +40,8 @@ struct MenuBarView: View {
 
         Divider()
 
-        Button("Settings…") {
-            OpenRubricWindows.shared.showSettings()
+        SettingsLink {
+            Text("Settings…")
         }
         .keyboardShortcut(",", modifiers: .command)
 
@@ -53,13 +53,17 @@ struct MenuBarView: View {
 }
 
 extension OpenRubricWindows {
+    /// Opens the Settings scene. Used from AppKit delegate contexts where
+    /// SettingsLink (SwiftUI) isn't available.
     func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
         if #available(macOS 14.0, *) {
-            // Settings scene opens via ⌘,
+            // The supported programmatic path on macOS 14+
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         } else {
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
+    }
+}
     }
 }
