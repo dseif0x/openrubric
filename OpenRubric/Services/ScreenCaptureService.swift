@@ -2,13 +2,12 @@ import AppKit
 import ScreenCaptureKit
 import CoreGraphics
 
-/// Captures the display containing the pointer, using ScreenCaptureKit on macOS 13+
-/// (with a CGDisplay fallback for systems where SCK is unavailable).
+/// Captures the display containing the pointer via ScreenCaptureKit.
 final class ScreenCaptureService {
     static let shared = ScreenCaptureService()
 
-    struct CaptureResult {
-        let image: NSImage
+    struct CaptureResult: Sendable {
+        let image: CGImage
         let pngBase64: String
         let pointerLocation: CGPoint  // in screen (global) coordinates
         let displayID: CGDirectDisplayID
@@ -19,7 +18,6 @@ final class ScreenCaptureService {
     /// Returns the display ID under the current pointer position.
     /// Uses CGEvent coordinates (top-left origin) — directly compatible with CGDisplayBounds.
     func displayUnderPointer() -> (CGDirectDisplayID, CGPoint)? {
-        // CGEvent gives us the pointer in CG global coordinates (top-left origin of primary display)
         guard let event = CGEvent(source: nil) else { return nil }
         let point = event.location
 
@@ -48,27 +46,16 @@ final class ScreenCaptureService {
         let bounds = CGDisplayBounds(displayID)
         let scale = await displayScale(displayID)
 
-        // Try ScreenCaptureKit first (macOS 12.3+), fall back to CGDisplayCreateImage
-        let cgImage: CGImage
-        if #available(macOS 12.3, *) {
-            do {
-                cgImage = try await captureWithSCK(displayID: displayID)
-            } catch {
-                cgImage = (CGDisplayCreateImage(displayID)) ?? (CGDisplayCreateImage(CGMainDisplayID()) ?? fallbackImage())
-            }
-        } else {
-            cgImage = (CGDisplayCreateImage(displayID)) ?? fallbackImage()
-        }
+        let cgImage = try await captureWithSCK(displayID: displayID)
 
         guard let pngData = cgImage.pngData() else {
             throw CaptureError.encodingFailed
         }
 
-        let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
         let base64 = pngData.base64EncodedString()
 
         return CaptureResult(
-            image: nsImage,
+            image: cgImage,
             pngBase64: base64,
             pointerLocation: pointer,
             displayID: displayID,
@@ -77,29 +64,23 @@ final class ScreenCaptureService {
         )
     }
 
-    @available(macOS 12.3, *)
+    /// Single-screenshot capture via SCScreenshotManager (macOS 14+).
     private func captureWithSCK(displayID: CGDirectDisplayID) async throws -> CGImage {
-        let contentFilter: SCContentFilter
-        do {
-            let shareableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            guard let display = shareableContent.displays.first(where: { $0.displayID == displayID }) else {
-                throw CaptureError.noDisplayFound
-            }
-            contentFilter = SCContentFilter(display: display, excludingWindows: [])
-        } catch {
-            throw CaptureError.sckFailed(String(describing: error))
+        let shareableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        guard let display = shareableContent.displays.first(where: { $0.displayID == displayID }) else {
+            throw CaptureError.noDisplayFound
         }
 
+        let filter = SCContentFilter(display: display, excludingWindows: [])
         let config = SCStreamConfiguration()
         config.showsCursor = false
-        config.captureResolution = .best
         config.scalesToFit = false
+        config.captureResolution = .best
 
-        let image = try await SCScreenshotManager.captureImage(
-            contentFilter: contentFilter,
+        return try await SCScreenshotManager.captureImage(
+            contentFilter: filter,
             configuration: config
         )
-        return image
     }
 
     private func displayScale(_ displayID: CGDirectDisplayID) async -> Double {
@@ -109,16 +90,6 @@ final class ScreenCaptureService {
             }) else { return 2.0 }
             return screen.backingScaleFactor
         }
-    }
-
-    private func fallbackImage() -> CGImage {
-        // 1x1 transparent pixel — should never happen in practice
-        let ctx = CGContext(
-            data: nil, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        )!
-        return ctx.makeImage()!
     }
 
     enum CaptureError: Error, LocalizedError {

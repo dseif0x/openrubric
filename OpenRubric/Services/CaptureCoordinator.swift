@@ -49,47 +49,37 @@ final class CaptureCoordinator: ObservableObject {
 
             AnswerDelivery.shared.setWorking("Reading…")
 
-            // 2. Convert NSImage to CGImage for OCR
-            guard let cgImage = capture.image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                AnswerDelivery.shared.setError("Failed to process captured image.")
-                return
-            }
-
-            // Compute pointer position relative to the display origin.
-            // CGEvent.location and CGDisplayBounds are both CG coordinates (top-left origin).
+            // Pointer position relative to display origin, scaled to image pixels
             let pointerInDisplay = CGPoint(
                 x: capture.pointerLocation.x - capture.displayBounds.minX,
                 y: capture.pointerLocation.y - capture.displayBounds.minY
             )
-            // Scale from points to image pixels (backing store resolution)
             let pointerInImage = CGPoint(
                 x: pointerInDisplay.x * capture.scale,
                 y: pointerInDisplay.y * capture.scale
             )
-            // pointerInImage is now in top-left-origin pixel coordinates,
-            // matching CGImage pixel layout (row 0 = top of screen when encoded as PNG)
 
-            // 3. OCR anchor
+            // 2. OCR anchor
             let anchor = await OCRService.shared.findAnchorText(
-                cgImage: cgImage,
+                cgImage: capture.image,
                 pointerInImage: pointerInImage
             )
 
             AnswerDelivery.shared.setWorking("Solving…")
 
-            // 4. Draw the pink marker on the image (adds visual anchor for the model)
+            // 3. Draw the pink marker on the image (adds visual anchor for the model)
             let markedBase64 = Self.drawMarker(
-                on: cgImage,
+                on: capture.image,
                 pointerInImage: pointerInImage
             ) ?? capture.pngBase64
 
-            // 5. Build pointer description string
+            // 4. Build pointer description string
             let pointerDesc = String(
                 format: "(%.0f, %.0f) pixels",
                 pointerInImage.x, pointerInImage.y
             )
 
-            // 6. Call the AI
+            // 5. Call the AI
             switch mode {
             case .remote:
                 await solveFreeform(imageBase64: markedBase64, pointerDescription: pointerDesc, anchor: anchor?.text)
