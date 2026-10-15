@@ -17,16 +17,22 @@ final class CaptureCoordinator: ObservableObject {
 
         let settings = SettingsStore.shared
         guard settings.isConfigured else {
-            AnswerDelivery.shared.setError("No provider configured. Open Settings to add your API endpoint and key.")
+            Task { @MainActor in
+                AnswerDelivery.shared.setError("No provider configured. Open Settings to add your API endpoint and key.")
+            }
             OverlayController.shared.showError("No provider configured.\nOpen Settings (⌘,) to add your endpoint + key.")
             return
         }
 
         isProcessing = true
-        AnswerDelivery.shared.setWorking("Capturing…")
+        Task { @MainActor in
+            AnswerDelivery.shared.setWorking("Capturing…")
+        }
 
         solveTask = Task { @MainActor in
-            defer { isProcessing = false }
+            defer {
+                isProcessing = false
+            }
 
             let mode = settings.currentMode
 
@@ -95,6 +101,7 @@ final class CaptureCoordinator: ObservableObject {
 
     // MARK: - Solve paths
 
+    @MainActor
     private func solveMultipleChoice(imageBase64: String, pointerDescription: String, anchor: String?) async {
         do {
             let response = try await AIService.shared.solveMultipleChoice(
@@ -113,6 +120,7 @@ final class CaptureCoordinator: ObservableObject {
         }
     }
 
+    @MainActor
     private func solveFreeform(imageBase64: String, pointerDescription: String, anchor: String?) async {
         OverlayController.shared.answerText = ""
         OverlayController.shared.isStreaming = true

@@ -160,7 +160,6 @@ final class AIService {
                         throw AIError.httpError((response as? HTTPURLResponse)?.statusCode ?? -1)
                     }
 
-                    var buffer = ""
                     for try await line in bytes.lines {
                         guard line.hasPrefix("data: ") else { continue }
                         let payload = String(line.dropFirst(6))

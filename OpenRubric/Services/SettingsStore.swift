@@ -43,7 +43,7 @@ final class SettingsStore: ObservableObject {
         shortcutString = defaults.string(forKey: "shortcut.main") ?? "⌥⏎"
         hideDockIcon = defaults.bool(forKey: "app.hideDock")
         onboardingCompleted = defaults.bool(forKey: "app.onboarded")
-        captureWarmup = defaults.bool(forKey: "capture.warmup") ?? true
+        captureWarmup = defaults.bool(forKey: "capture.warmup")
     }
 
     var isConfigured: Bool {

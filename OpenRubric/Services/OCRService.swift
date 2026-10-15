@@ -2,10 +2,10 @@ import Vision
 import AppKit
 
 /// Runs on-device OCR via the Vision framework to locate the text nearest the pointer.
-final class OCRService {
+final class OCRService: @unchecked Sendable {
     static let shared = OCRService()
 
-    struct OCRAnchor {
+    struct OCRAnchor: Sendable {
         let text: String
         let boundingBox: CGRect  // normalized (0..1, bottom-left origin, Vision convention)
     }
@@ -15,7 +15,14 @@ final class OCRService {
     ///   - cgImage: the full-display screenshot
     ///   - pointerInImage: pointer position in image pixel coordinates (top-left origin)
     func findAnchorText(cgImage: CGImage, pointerInImage: CGPoint) async -> OCRAnchor? {
-        await withCheckedContinuation { continuation in
+        // Vision types (VNImageRequestHandler, VNRecognizeTextRequest) are not Sendable.
+        // Run the entire OCR operation inside a single detached task so nothing crosses
+        // concurrency domains until we produce a Sendable result.
+        let pointer = pointerInImage
+        let imageWidth = cgImage.width
+        let imageHeight = cgImage.height
+
+        return await withCheckedContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
                 guard error == nil,
                       let observations = request.results as? [VNRecognizedTextObservation] else {
@@ -28,8 +35,8 @@ final class OCRService {
                 for obs in observations {
                     let box = obs.boundingBox // normalized, bottom-left origin
                     let center = CGPoint(x: box.midX, y: box.midY)
-                    let dx = center.x - pointerInImage.x / CGFloat(cgImage.width)
-                    let dy = center.y - (1.0 - pointerInImage.y / CGFloat(cgImage.height))
+                    let dx = center.x - pointer.x / CGFloat(imageWidth)
+                    let dy = center.y - (1.0 - pointer.y / CGFloat(imageHeight))
                     let dist = dx * dx + dy * dy
                     if best == nil || dist < best!.dist {
                         best = (obs, dist)

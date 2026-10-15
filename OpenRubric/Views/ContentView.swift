@@ -314,7 +314,7 @@ struct PermissionRow: View {
                 .frame(width: 20)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 13, .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.white)
                 Text(subtitle)
                     .font(.system(size: 11))
